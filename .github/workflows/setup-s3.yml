@@ -1,0 +1,55 @@
+name: Setup AWS S3 Test Bucket   # The name you'll see in the Actions tab
+
+on:
+  workflow_dispatch:             # Lets you run it manually
+
+jobs:
+  setup-bucket:                  # The job name
+    runs-on: ubuntu-latest       # Run on a Linux server GitHub provides
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Create S3 bucket
+        run: |                    # The commands that actually run
+          BUCKET_NAME=varsity-order-intake-test
+          REGION=${{ secrets.AWS_REGION }}
+
+          echo "Creating bucket..."
+          aws s3api create-bucket \
+            --bucket $BUCKET_NAME \
+            --region $REGION \
+            --create-bucket-configuration LocationConstraint=$REGION || echo "Bucket may already exist"
+
+          echo "Enabling versioning..."
+          aws s3api put-bucket-versioning \
+            --bucket $BUCKET_NAME \
+            --versioning-configuration Status=Enabled
+
+          echo "Enabling encryption..."
+          aws s3api put-bucket-encryption \
+            --bucket $BUCKET_NAME \
+            --server-side-encryption-configuration '{
+              "Rules": [{
+                "ApplyServerSideEncryptionByDefault": { "SSEAlgorithm": "AES256" }
+              }]
+            }'
+
+      - name: Upload dummy test files
+        run: |
+          echo "Dummy file for testing" > test_order1.pdf
+          echo "Sample order" > test_order2.pdf
+          aws s3 cp test_order1.pdf s3://varsity-order-intake-test/
+          aws s3 cp test_order2.pdf s3://varsity-order-intake-test/
+          aws s3 ls s3://varsity-order-intake-test/
+
+      - name: Success message
+        run: echo "✅ AWS S3 test bucket created and dummy files uploaded!"

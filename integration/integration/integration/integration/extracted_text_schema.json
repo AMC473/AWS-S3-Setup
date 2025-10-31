@@ -1,0 +1,16 @@
+{
+  "file_name": "test_order1.pdf",
+  "upload_time": "2025-10-30T10:00:00Z",
+  "customer": "ABC Sports",
+  "order_number": "ORD-12345",
+  "styles": [
+    {
+      "style_number": "ST-987",
+      "color": "Red",
+      "quantity": 120
+    }
+  ],
+  "comments": "Rush order",
+  "confidence_score": 0.98,
+  "review_status": "Pending"
+}
